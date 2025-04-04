@@ -7,7 +7,7 @@ import {
 } from "@/lib/db/schema/resources";
 import { generateEmbeddings } from "../ai/embedding";
 import { db } from "../db";
-import { embeddings as embeddingTable } from "../db/schema/embeddings";
+import { embeddings as embeddingsTable } from "../db/schema/embeddings";
 
 export const createResource = async (input: NewResourceParams) => {
   try {
@@ -19,17 +19,19 @@ export const createResource = async (input: NewResourceParams) => {
       .returning();
 
     const embeddings = await generateEmbeddings(content);
-    await db.insert(embeddingTable).values(
-      embeddings.map((embedding) => ({
-        resourceID: resource.id,
-        ...embedding,
-      })),
-    );
+    const values = embeddings.map((embedding) => ({
+      resourceID: resource.id,
+      ...embedding,
+    }));
+
+    console.log(values);
+
+    await db.insert(embeddingsTable).values(values);
 
     return "Resource successfully created and embedded.";
-  } catch (e) {
-    if (e instanceof Error)
-      return e.message.length > 0 ? e.message : "Error, please try again.";
+  } catch (error) {
+    return error instanceof Error && error.message.length > 0
+      ? error.message
+      : "Error, please try again.";
   }
 };
-
