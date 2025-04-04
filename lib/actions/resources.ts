@@ -1,11 +1,13 @@
-'use server';
+"use server";
 
 import {
   NewResourceParams,
   insertResourceSchema,
   resources,
-} from '@/lib/db/schema/resources';
-import { db } from '../db';
+} from "@/lib/db/schema/resources";
+import { generateEmbeddings } from "../ai/embedding";
+import { db } from "../db";
+import { embeddings as embeddingTable } from "../db/schema/embeddings";
 
 export const createResource = async (input: NewResourceParams) => {
   try {
@@ -16,9 +18,18 @@ export const createResource = async (input: NewResourceParams) => {
       .values({ content })
       .returning();
 
-    return 'Resource successfully created.';
+    const embeddings = await generateEmbeddings(content);
+    await db.insert(embeddingTable).values(
+      embeddings.map((embedding) => ({
+        resourceID: resource.id,
+        ...embedding,
+      })),
+    );
+
+    return "Resource successfully created and embedded.";
   } catch (e) {
     if (e instanceof Error)
-      return e.message.length > 0 ? e.message : 'Error, please try again.';
+      return e.message.length > 0 ? e.message : "Error, please try again.";
   }
 };
+
