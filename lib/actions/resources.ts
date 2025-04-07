@@ -24,8 +24,6 @@ export const createResource = async (input: NewResourceParams) => {
       ...embedding,
     }));
 
-    console.log(values);
-
     await db.insert(embeddingsTable).values(values);
 
     return "Resource successfully created and embedded.";
